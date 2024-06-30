@@ -11,9 +11,9 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 
-const listings = require("./routes/listing.js");
-const reviews = require("./routes/review.js");
-const { getMaxListeners } = require("events");
+const listingRouter = require("./routes/listing.js");
+const reviewRouter = require("./routes/review.js");
+const userRouter = require("./routes/user.js");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 
@@ -65,20 +65,22 @@ passport.deserializeUser(User.deserializeUser());
 app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
+    res.locals.currUser = req.user;
     next();
 });
 
-app.get("/demouser", async (req, res) => {
-    let fakeUser = new User({
-        email: "student@gmail.com",
-        username: "delta-student",
-    });
-    let newUser = await User.register(fakeUser, "helloworld");
-    res.send(newUser);
-});
+// app.get("/demouser", async (req, res) => {
+//     let fakeUser = new User({
+//         email: "student@gmail.com",
+//         username: "delta-student",
+//     });
+//     let newUser = await User.register(fakeUser, "helloworld");
+//     res.send(newUser);
+// });
 
-app.use("/listings", listings);
-app.use("/listings/:id/reviews", reviews)
+app.use("/listings", listingRouter);
+app.use("/listings/:id/reviews", reviewRouter);
+app.use("/", userRouter);
 
 
 app.all("*", (req, res, next) => {
@@ -87,7 +89,7 @@ app.all("*", (req, res, next) => {
 
 app.use((err, req, res, next) => {
     let { statusCode = 500, message = "Something went wrong" } = err;
-    res.status(statusCode).render("error.ejs", { message })
+    res.status(statusCode).render("listings/error.ejs", { message })
     // res.status(statusCode).send(message);
 });
 
